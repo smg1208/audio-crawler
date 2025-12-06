@@ -1,0 +1,25 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+build/
+dist/
+.eggs/
+*.egg-info/
+*.egg
+.Python
+pip-log.txt
+.env
+.env.*
+*.sqlite3
+*.log
+.DS_Store
+.idea/
+.vscode/
+.cache/
+.env
+config.json
+TANGTHUVIEN CRAWLER & AUDIO CONVERTER.ini

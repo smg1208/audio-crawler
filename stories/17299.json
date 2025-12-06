@@ -1,0 +1,12 @@
+{
+  "story_id": "17299",
+  "base_url": "https://tangthuvien.net",
+  "chapters_api": "https://tangthuvien.net/story/chapters?story_id={}",
+  "last_downloaded_chapter": 101,
+  "batch_size": 1,
+  "tts_backend": "edge-tts",
+  "tts_voice": "vi-VN-NamMinhNeural",
+  "fetch_retries": 3,
+  "fetch_backoff": 1.0,
+  "openai_api_key": null
+}

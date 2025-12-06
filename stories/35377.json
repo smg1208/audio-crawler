@@ -1,0 +1,20 @@
+{
+  "story_id": "35377",
+  "story_title": "Bá Võ",
+  "author": "Khai Hoang",
+  "lead": "Kinh mạch bế tắc, bị coi là phế vật? Sở Nam dùng nắm đấm đập tan định mệnh, bước lên con đường Bá Võ Độc Tôn!",
+  "synopsis": "Tại Thiên Vũ Đại Lục, kẻ mạnh được tôn sùng, kẻ yếu bị chà đạp. Sở Nam, một thiếu niên sinh ra đã bị kinh mạch tắc nghẽn, không thể tu luyện, chịu đủ mọi sự khinh miệt và sỉ nhục. Không cam lòng làm kẻ dưới đáy xã hội, hắn tình cờ có được kỳ ngộ, rèn luyện thân thể đến cực hạn. Lấy lực phá pháp, lấy võ nhập đạo, Sở Nam từng bước chiến đấu, dẫm nát mọi thiên tài kiêu ngạo, dùng nấm đấm sắt thép để chứng minh chân lý: Khi sức mạnh đạt đến đỉnh cao, mọi quy tắc đều là hư vô.",
+  "work_title": "Bá Võ",
+  "tags": "#BaVo #PhachVu #HuyenHuyen #LuyenThe #NhietHuyet #AudioTruyen #NamMinh",
+  "narrator": "Giọng đọc Nam Minh (tts)",
+  "playlist": "",
+  "base_url": "https://tangthuvien.net",
+  "chapters_api": "https://tangthuvien.net/story/chapters?story_id={}",
+  "last_downloaded_chapter": 400,
+  "batch_size": 60,
+  "tts_backend": "edge-tts",
+  "tts_voice": "vi-VN-NamMinhNeural",
+  "fetch_retries": 3,
+  "fetch_backoff": 1.0,
+  "openai_api_key": null
+}

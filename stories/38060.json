@@ -1,0 +1,19 @@
+{
+  "story_id": "38060",
+  "story_title": "Trận Vấn Trường Sinh",
+  "author": "Quan Hư",
+  "lead": "Một cây bút, một tấm lòng cầu đạo. Theo chân Mặc Họa dùng Trận pháp vẽ nên con đường trường sinh!",
+  "synopsis": "Trong thế giới Tu chân đầy rẫy hiểm nguy, Mặc Họa là một đứa trẻ xuất thân bần hàn, tư chất ngũ hành tạp linh căn tầm thường. Tuy nhiên, hắn lại sở hữu thần thức hơn người. Không có pháp bảo kinh thiên hay huyết mạch bá đạo, Mặc Họa chọn con đường Tu Trận. Từ những trận đồ cơ bản để mưu sinh qua ngày, hắn từng bước giải mã những đại trận thượng cổ, dùng trí tuệ và sự tỉ mỉ để bảo vệ người thân và tìm kiếm đáp án cho câu hỏi về sự trường sinh.",
+  "work_title": "Trận Vấn Trường Sinh",
+  "tags": "#TranVanTruongSinh #QuanHu #TienHiep #TranPhap #AudioTruyen #DarkFantasy",
+  "narrator": "Giọng đọc Nam Minh (tts)",
+  "playlist": "https://www.youtube.com/playlist?list=PLxYgiuUshyZd5zVZODT8dhhX1kSG3AvJ_",
+  "base_url": "https://tangthuvien.net",
+  "chapters_api": "https://tangthuvien.net/story/chapters?story_id={}",
+  "last_downloaded_chapter": 622,
+  "batch_size": 344,
+  "tts_backend": "edge-tts",
+  "tts_voice": "vi-VN-NamMinhNeural",
+  "fetch_retries": 3,
+  "fetch_backoff": 1.0
+}
