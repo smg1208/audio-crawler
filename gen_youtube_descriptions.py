@@ -13,6 +13,7 @@ import argparse
 import os
 import textwrap
 from typing import List, Optional
+from crawler.utils import extract_chapter_number_from_text
 
 from crawler.config_manager import ConfigManager, StoryConfigStore
 from crawler.fetcher import ChapterFetcher
@@ -36,17 +37,28 @@ def short_summary_from_html(html: str) -> str:
     return text[:160].rstrip() + '...'
 
 
+
+
+
 def make_description(
     story_title: str,
     group_index: int,
     chapters: List[dict],
     playlist_link: str = '[Link_Playlist_Của_Bạn]',
     metadata: Optional[dict] = None,
+    start_episode: int = 1,
+    source_label: str = 'tangthuvien.net',
 ) -> str:
     # chapters is a list of dicts with keys: index, title, url
-    start_idx = chapters[0]['index']
-    end_idx = chapters[-1]['index']
-    episode_number = group_index
+    # chapters may carry a 'display_index' (extracted from content) to reflect real numbering
+    start_idx = chapters[0].get('display_index', chapters[0].get('index'))
+    end_idx = chapters[-1].get('display_index', chapters[-1].get('index'))
+    # allow caller to offset episode numbering (start_episode = 1 means first group -> episode 1)
+    try:
+        episode_base = int(start_episode or 1)
+    except Exception:
+        episode_base = 1
+    episode_number = episode_base + (group_index - 1)
 
     # metadata may supply keys: author, lead, synopsis, work_title, tags, narrator
     if metadata is None:
@@ -58,34 +70,110 @@ def make_description(
     tags = metadata.get('tags', '#MucThanKy #TrachTru #TienHiep #AudioTruyen #DocTruyenDemKhuya')
     narrator = metadata.get('narrator', 'Giọng đọc Nam Minh (tts)')
 
-    header = f"🎧 {story_title} - Tập {episode_number} (Chương {start_idx} đến {end_idx}) | Tác giả: {author}"
+    # Prefer work_title/story_title from metadata for display
+    display_work_title = metadata.get('work_title') or metadata.get('story_title') or story_title
+
+    header = f"🎧 {display_work_title} - Tập {episode_number} (Chương {start_idx} đến {end_idx}) | Tác giả: {author}"
 
     lines = [header, '👉 Đăng ký kênh để không bỏ lỡ chương mới nhất: https://www.youtube.com/@nghebangtai6875', '', '📜 NỘI DUNG TẬP NÀY:']
 
+    # Create parser instance for cleaning chapter titles
+    parser = HTMLParser()
+    
     for ch in chapters:
-        cidx = ch.get('index')
+        # Prefer display_index (from content) for human-facing numbering
+        cidx = ch.get('display_index', ch.get('index'))
         title = ch.get('title') or ''
-        # clean title: remove leading 'Chương X' if present, keep descriptive part
-        short = title
-        if ':' in title:
-            parts = title.split(':', 1)
-            short = parts[1].strip()
-        # If still not helpful, fetch and summarize
+        short = ch.get('summary') or title
+        # if title contains a colon, prefer the trailing descriptive part
         if not short or len(short) < 4:
-            try:
-                html = ChapterFetcher('', '').fetch_chapter(ch['url'])
-                short = short_summary_from_html(html).split('\n')[0]
-            except Exception:
-                short = title
+            if ':' in title:
+                parts = title.split(':', 1)
+                short = parts[1].strip()
+        # final fallback: use provided title
+        if not short or len(short) < 2:
+            short = title
+        
+        # Clean chapter title to remove translator/uploader names (e.g., "Vong Mạng")
+        if short:
+            short = parser._clean_chapter_title(short)
+            # If still starts with "Chương X: ..." strip the leading prefix to avoid duplication
+            if short.lower().startswith('chương'):
+                parts2 = short.split(':', 1)
+                if len(parts2) == 2:
+                    short = parts2[1].strip()
 
         lines.append(f"- Chương {cidx}: {short}")
 
-    lines += ['', lead, '', '📖 GIỚI THIỆU TRUYỆN ' + work_title + ':', synopsis, '', '🔗 DANH SÁCH PHÁT (PLAYLIST) TRỌN BỘ:', f'▶️ Nghe trọn bộ {story_title} tại đây: {playlist_link}', '', '---------------------------------------------------', '⚠️ BẢN QUYỀN & TÁC GIẢ:', f'- Tác phẩm: {work_title}', f'- Tác giả: {author}', '- Nguồn dịch: tangthuvien.net', f'- Giọng đọc: {narrator}', '- Hình ảnh & Video: Được biên tập bởi NGHE BẰNG TAI', '(Mọi vấn đề về bản quyền xin liên hệ: reading.ttv@gmail.com)', '', tags]
+    lines += ['', lead, '', '📖 GIỚI THIỆU TRUYỆN ' + display_work_title + ':', synopsis, '', '🔗 DANH SÁCH PHÁT (PLAYLIST) TRỌN BỘ:', f'▶️ Nghe trọn bộ {display_work_title} tại đây: {playlist_link}', '', '---------------------------------------------------', '⚠️ BẢN QUYỀN & TÁC GIẢ:', f'- Tác phẩm: {display_work_title}', f'- Tác giả: {author}', f'- Nguồn dịch: {source_label}', f'- Giọng đọc: {narrator}', '- Hình ảnh & Video: Được biên tập bởi NGHE BẰNG TAI', '(Mọi vấn đề về bản quyền xin liên hệ: reading.ttv@gmail.com)', '', tags]
 
     return '\n'.join(lines)
 
 
-def write_descriptions(cfg: ConfigManager, group_size: int = 5, out_playist: str = '[Link_Playlist_Của_Bạn]', story_id: Optional[str] = None) -> int:
+def load_chapters_from_files(story_id: str) -> List[dict]:
+    """Load chapters from mapping.csv and text files instead of fetching from server.
+    
+    Returns a list of chapter dicts with keys: index, display_index, title, url, summary
+    """
+    import csv
+    import os
+    
+    mapping_path = f"./{story_id} - mapping.csv"
+    text_dir = f"./{story_id} - Text"
+    
+    if not os.path.exists(mapping_path):
+        return []
+    
+    chapters = []
+    parser = HTMLParser()
+    
+    with open(mapping_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                idx = int(row['original_index'])
+                display_idx = int(row['display_index']) if row['display_index'] else idx
+                text_path = row['text_path']
+                
+                # Read title from first line of text file
+                title = f"Chương {display_idx}"
+                summary = ""
+                
+                if os.path.exists(text_path):
+                    with open(text_path, 'r', encoding='utf-8') as tf:
+                        first_line = tf.readline().strip()
+                        if first_line.startswith('Chương') and ':' in first_line:
+                            # Extract title from "Chương X: Title"
+                            parts = first_line.split(':', 1)
+                            if len(parts) == 2:
+                                title = first_line
+                                summary = parts[1].strip()
+                                # Clean summary
+                                if summary:
+                                    summary = parser._clean_chapter_title(summary)
+                        else:
+                            # If no title in first line, use first few lines as summary
+                            tf.seek(0)
+                            lines = [l.strip() for l in tf.readlines()[:3] if l.strip()]
+                            if lines:
+                                summary = ' '.join(lines[:2])[:160]
+                
+                chapters.append({
+                    'index': idx,
+                    'display_index': display_idx,
+                    'title': title,
+                    'url': '',  # Not needed when loading from files
+                    'summary': summary or title
+                })
+            except (ValueError, KeyError) as e:
+                continue
+    
+    return sorted(chapters, key=lambda x: x['index'])
+
+
+def write_descriptions(cfg: ConfigManager, group_size: int = 5, out_playist: str = '[Link_Playlist_Của_Bạn]', story_id: Optional[str] = None, fast: bool = False, start_episode: int = 1, use_files: bool = False) -> int:
+    # optional start chapter index (None means from beginning)
+    start_chapter = None
     # accept either a ConfigManager or StoryConfigStore
     if hasattr(cfg, 'global_cfg'):
         global_cfg = cfg.global_cfg
@@ -95,12 +183,93 @@ def write_descriptions(cfg: ConfigManager, group_size: int = 5, out_playist: str
     story_id = story_id or global_cfg.get('story_id')
     base_url = global_cfg.get('base_url')
     chapters_api = global_cfg.get('chapters_api')
+    source = global_cfg.get('source', 'tangthuvien')  # default to tangthuvien for backward compatibility
+    source_label = source
+    try:
+        from urllib.parse import urlparse
+        if base_url:
+            host = urlparse(base_url).netloc or ''
+            if host:
+                source_label = host
+    except Exception:
+        pass
 
-    fetcher = ChapterFetcher(chapters_api, base_url)
-    chapters = fetcher.fetch_chapter_list(story_id)
+    # Try to load from files first if use_files is True, or if fetch fails
+    chapters = []
+    if use_files:
+        print(f"Loading chapters from mapping.csv and text files for {story_id}...")
+        chapters = load_chapters_from_files(story_id)
+        if chapters:
+            print(f"✓ Loaded {len(chapters)} chapters from files")
+        else:
+            print("⚠️  No chapters found in files, trying to fetch from server...")
+    
+    # If not loaded from files, try fetching from server
+    if not chapters:
+        fetcher = ChapterFetcher(chapters_api, base_url, source=source)
+        
+        # Login to bnsach if credentials are provided
+        if source == 'bnsach':
+            username = global_cfg.get('bnsach_username')
+            password = global_cfg.get('bnsach_password')
+            if username and password:
+                print(f"Logging in to bnsach.com as {username}...")
+                try:
+                    if fetcher.login_bnsach(username, password):
+                        print("✓ Login successful")
+                    else:
+                        print("⚠️  Login failed - continuing anyway (may need manual login)")
+                except Exception as e:
+                    print(f"⚠️  Login error: {e}")
+                    print("   Trying to load from files instead...")
+                    chapters = load_chapters_from_files(story_id)
+                    if chapters:
+                        print(f"✓ Loaded {len(chapters)} chapters from files")
+                    else:
+                        print("No chapters found in files either. Aborting.")
+                        return 0
+            else:
+                print("⚠️  No bnsach credentials found in config. Trying to load from files...")
+                chapters = load_chapters_from_files(story_id)
+                if chapters:
+                    print(f"✓ Loaded {len(chapters)} chapters from files")
+                else:
+                    print("No chapters found in files. Aborting.")
+                    return 0
+        
+        if not chapters:
+            try:
+                chapters = fetcher.fetch_chapter_list(story_id)
+            except Exception as e:
+                print(f"⚠️  Failed to fetch chapters from server: {e}")
+                print("   Trying to load from files instead...")
+                chapters = load_chapters_from_files(story_id)
+                if chapters:
+                    print(f"✓ Loaded {len(chapters)} chapters from files")
+                else:
+                    print("No chapters found in files either. Aborting.")
+                    return 0
+    
     if not chapters:
         print('No chapters found')
         return 0
+
+    # If the global config or CLI provided a starting chapter, filter chapters.
+    # Allow callers to set 'start_chapter' on the cfg object (optional) or
+    # rely on external filtering prior to calling this function. If present, it
+    # should be an integer index.
+    try:
+        sc = getattr(cfg, 'start_chapter', None) or cfg.get('start_chapter')
+        if sc:
+            try:
+                start_chapter = int(sc)
+            except Exception:
+                start_chapter = None
+    except Exception:
+        start_chapter = None
+
+    if start_chapter is not None:
+        chapters = [c for c in chapters if c.get('index', 0) >= start_chapter]
 
     # determine story title from first chapter if available
     story_title = None
@@ -117,7 +286,7 @@ def write_descriptions(cfg: ConfigManager, group_size: int = 5, out_playist: str
         pass
 
     if not story_title:
-        story_title = cfg.get('story_title') or f'Story {story_id}'
+        story_title = global_cfg.get('story_title') or f'Story {story_id}'
 
     # if per-story metadata exists, prefer it
     metadata = {}
@@ -142,9 +311,52 @@ def write_descriptions(cfg: ConfigManager, group_size: int = 5, out_playist: str
     ensure_dirs([out_dir])
 
     count = 0
+    # Enrich each chapter with display index and summary.
+    # If `fast` is True, avoid fetching HTML and rely on chapter list titles only.
+    parser = HTMLParser()
+    for ch in chapters:
+        title = ch.get('title') or ''
+        # Try to extract display index from title first (fast path)
+        display_idx = extract_chapter_number_from_text('', title)
+        if display_idx:
+            ch['display_index'] = display_idx
+        else:
+            ch['display_index'] = ch.get('index')
+
+        # Summary: if fast, derive from title (strip leading 'Chương X:'), otherwise fetch HTML for better summary
+        if fast:
+            short = title
+            if ':' in title:
+                parts = title.split(':', 1)
+                short = parts[1].strip()
+            # Clean chapter title to remove translator/uploader names
+            if short:
+                short = parser._clean_chapter_title(short)
+            ch['summary'] = short or title
+        else:
+            try:
+                html = fetcher.fetch_chapter(ch['url'])
+                main_text = parser.parse_main_text(html)
+                summary = short_summary_from_html(html)
+                # Clean chapter title to remove translator/uploader names
+                if summary:
+                    summary = parser._clean_chapter_title(summary)
+                ch['summary'] = summary
+                # also try to extract display index from content if available
+                display_idx2 = extract_chapter_number_from_text(main_text, title)
+                if display_idx2:
+                    ch['display_index'] = display_idx2
+            except Exception:
+                # Clean title even in exception case
+                cleaned_title = parser._clean_chapter_title(title) if title else ''
+                ch['summary'] = cleaned_title
+
     for i, group in enumerate(chunk_list(chapters, group_size), start=1):
-        desc = make_description(story_title, i, group, playlist_link=out_playist, metadata=metadata)
-        filename = f"{out_dir}/Tập_{i}_Chương_{group[0]['index']}_đến_{group[-1]['index']}.txt"
+        desc = make_description(story_title, i, group, playlist_link=out_playist, metadata=metadata, start_episode=start_episode, source_label=source_label)
+        # use display indices for filename where possible
+        start_disp = group[0].get('display_index', group[0].get('index'))
+        end_disp = group[-1].get('display_index', group[-1].get('index'))
+        filename = f"{out_dir}/Tập_{i}_Chương_{start_disp}_đến_{end_disp}.txt"
         with open(filename, 'w', encoding='utf-8') as fh:
             fh.write(desc)
         count += 1
@@ -158,6 +370,10 @@ def main(argv=None):
     parser.add_argument('--group-size', type=int, default=5, help='number of chapters per description')
     parser.add_argument('--playlist', default='[Link_Playlist_Của_Bạn]', help='playlist link text')
     parser.add_argument('--story-id', default=None, help='override story_id and use per-story metadata')
+    parser.add_argument('--start-chapter', type=int, default=None, help='start generating descriptions from this chapter index')
+    parser.add_argument('--fast', action='store_true', help='Use chapter list titles/numbers only and avoid fetching full chapter HTML (faster)')
+    parser.add_argument('--start-episode', type=int, default=1, help='Episode number to assign to the first generated group (default: 1)')
+    parser.add_argument('--use-files', action='store_true', help='Load chapters from mapping.csv and text files instead of fetching from server')
     args = parser.parse_args(argv)
 
     # Use StoryConfigStore so per-story files are available for metadata
@@ -165,7 +381,13 @@ def main(argv=None):
     # allow explicit override of story id
     story_id = args.story_id if hasattr(args, 'story_id') and args.story_id else store.global_cfg.get('story_id')
     cfg = store.global_cfg
-    n = write_descriptions(store, group_size=args.group_size, out_playist=args.playlist, story_id=story_id)
+    # pass start_chapter into the store object if provided so write_descriptions can pick it up
+    if args.start_chapter is not None:
+        try:
+            setattr(store, 'start_chapter', int(args.start_chapter))
+        except Exception:
+            pass
+    n = write_descriptions(store, group_size=args.group_size, out_playist=args.playlist, story_id=story_id, fast=args.fast, start_episode=args.start_episode, use_files=args.use_files)
     print(f'Wrote {n} descriptions into ./{story_id} - Youtube description')
 
 

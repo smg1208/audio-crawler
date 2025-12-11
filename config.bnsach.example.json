@@ -1,0 +1,23 @@
+{
+  "story_id": "khau-van-tien-dao-convert",
+  "source": "bnsach",
+  "base_url": "https://bnsach.com",
+  "chapters_api": "https://bnsach.com/reader/khau-van-tien-dao-convert/muc-luc",
+  "bnsach_username": "readingtruyen",
+  "bnsach_password": "CTf9zwqnpJXYD3U",
+  "last_downloaded_chapter": 0,
+  "batch_size": 200,
+  "tts_backend": "edge-tts",
+  "tts_voice": "vi-VN-NamMinhNeural",
+  "author": "",
+  "lead": "",
+  "synopsis": "",
+  "work_title": "",
+  "tags": "",
+  "narrator": "",
+  "playlist": "",
+  "fetch_retries": 3,
+  "fetch_backoff": 1.0,
+  "openai_api_key": null
+}
+

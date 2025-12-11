@@ -1,6 +1,6 @@
-# TANGTHUVIEN CRAWLER & AUDIO CONVERTER
+# TANGTHUVIEN & BNSACH CRAWLER & AUDIO CONVERTER
 
-This small Python project downloads story chapters from tangthuvien.net, saves each chapter as a text file, and converts it to audio using an external CLI tool `ttx`.
+This small Python project downloads story chapters from tangthuvien.net or bnsach.com, saves each chapter as a text file, and converts it to audio using an external CLI tool `ttx`.
 
 Features
 - Config-driven (config.json) so you can continue from last download
@@ -29,6 +29,32 @@ If you'd like to use the built-in `edge-tts` backend for higher-quality voices, 
 pip install edge-tts
 ```
 3. Edit `config.json` to the correct story ID and other settings.
+
+   **For tangthuvien.net:**
+   ```json
+   {
+     "story_id": "17299",
+     "source": "tangthuvien",
+     "base_url": "https://tangthuvien.net",
+     "chapters_api": "https://tangthuvien.net/story/chapters?story_id={}"
+   }
+   ```
+
+   **For bnsach.com:**
+   ```json
+   {
+     "story_id": "khau-van-tien-dao-convert",
+     "source": "bnsach",
+     "base_url": "https://bnsach.com",
+     "chapters_api": "https://bnsach.com/reader/khau-van-tien-dao-convert/muc-luc",
+     "bnsach_username": "your_username",
+     "bnsach_password": "your_password"
+   }
+   ```
+   Note: 
+   - For bnsach, `chapters_api` should be the direct URL to the table of contents page (muc-luc), and `story_id` should be the story slug.
+   - **bnsach.com requires login** to access chapters. Add your `bnsach_username` and `bnsach_password` to the config file.
+
 4. Run the tool:
 ```bash
 python3 run.py --config config.json

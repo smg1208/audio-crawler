@@ -1,0 +1,43 @@
+{
+  "story_id": "your-story-id",
+  "source": "bnsach",
+  "base_url": "https://bnsach.com",
+  "chapters_api": "https://bnsach.com/reader/your-story-id/muc-luc?page=all",
+  "bnsach_username": "",
+  "bnsach_password": "",
+  "last_downloaded_chapter": 0,
+  "batch_size": 200,
+  
+  "tts_backend": "edge-tts",
+  "tts_voice": "vi-VN-NamMinhNeural",
+  
+  "edge_rate": 1.0,
+  
+  "macos_voice": "Linh",
+  
+  "fpt_api_key": "",
+  "fpt_voice": "banmai",
+  
+  "piper_model_path": "",
+  "piper_config_path": "",
+  
+  "google_cloud_credentials_path": "",
+  "google_cloud_language_code": "vi-VN",
+  "google_cloud_voice_name": "",
+  "google_cloud_ssml_gender": "",
+  
+  "enable_tts_fallback": false,
+  "fallback_engines": ["macos", "gtts"],
+  
+  "author": "",
+  "lead": "",
+  "synopsis": "",
+  "work_title": "",
+  "tags": "",
+  "narrator": "",
+  "playlist": "",
+  "fetch_retries": 3,
+  "fetch_backoff": 1.0,
+  "openai_api_key": null
+}
+

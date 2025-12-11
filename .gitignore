@@ -23,3 +23,17 @@ pip-log.txt
 .env
 config.json
 TANGTHUVIEN CRAWLER & AUDIO CONVERTER.ini
+
+# Audio files
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.ogg
+*.flac
+* - Audio/
+credentials/
+models/
+voice_samples/
+venv_py311/
+path/

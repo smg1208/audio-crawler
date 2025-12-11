@@ -24,6 +24,9 @@ class TestGenYoutubeDescriptions(unittest.TestCase):
         self.assertIn('Tóm tắt ngắn gọn của truyện', out)
         self.assertIn('Mục Thần Ký (Tales of Herding Gods)', out)
         self.assertIn('#MucThanKy #TrachTru', out)
+        # test starting episode offset
+        out2 = make_description(story_title, 1, chapters, playlist_link='http://playlist', metadata=metadata, start_episode=5)
+        self.assertIn('Tập 5', out2)
 
 
 if __name__ == '__main__':

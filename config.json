@@ -1,11 +1,44 @@
 {
-  "story_id": "38060",
-  "base_url": "https://tangthuvien.net",
-  "chapters_api": "https://tangthuvien.net/story/chapters?story_id={}",
-  "last_downloaded_chapter": 330,
-  "batch_size": 10,
-  "tts_backend": "edge-tts",
+  "story_id": "35322",
+  "source": "bnsach",
+  "base_url": "https://bnsach.com",
+  "chapters_api": "https://bnsach.com/reader/khau-van-tien-dao-convert/muc-luc?page=all",
+  "bnsach_username": "readingtruyen",
+  "bnsach_password": "CTf9zwqnpJXYD3U",
+  "last_downloaded_chapter": 0,
+  "batch_size": 200,
+  
+  "tts_backend": "google-cloud",
+
   "tts_voice": "vi-VN-NamMinhNeural",
+  
+  "edge_rate": 1.0,
+  
+  "macos_voice": "Linh",
+  
+  "fpt_api_key": "",
+  "fpt_voice": "banmai",
+  
+  "piper_model_path": "",
+  "piper_config_path": "",
+  
+  "google_cloud_credentials_path": "credentials/geometric-rex-370803-ef593306e755.json",
+  "google_cloud_language_code": "vi-VN",
+  "google_cloud_voice_name": "vi-VN-Neural2-A",
+  "google_cloud_ssml_gender": "NEUTRAL",
+  
+  "coqui_model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
+  "coqui_device": "",
+  "coqui_speaker_wav": "",
+  "coqui_language": "vi",
+  
+  "azure_subscription_key": "",
+  "azure_region": "eastus",
+  "azure_voice_name": "vi-VN-HoaiMyNeural",
+  
+  "enable_tts_fallback": false,
+  "fallback_engines": ["edge-tts", "gtts"],
+  
   "author": "",
   "lead": "",
   "synopsis": "",
@@ -15,5 +48,8 @@
   "playlist": "",
   "fetch_retries": 3,
   "fetch_backoff": 1.0,
+  "tts_max_retries": 3,
+  "tts_retry_failed": true,
+  "tts_concurrency": 4,
   "openai_api_key": null
 }

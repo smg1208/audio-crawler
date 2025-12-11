@@ -4,3 +4,5 @@ edge-tts>=0.3.0
 rapidfuzz>=2.0.0
 stanza>=1.5.0
 openai>=0.27.0
+azure-cognitiveservices-speech>=1.47.0
+google-cloud-texttospeech>=2.33.0
