@@ -299,11 +299,11 @@ class TextToAudioConverter:
                     last_error = None
                     for attempt in range(max_retries):
                         try:
-                            if voice_arg:
-                                comm = Communicate(text, voice=voice_arg, rate=rate_str)
-                            else:
-                                comm = Communicate(text, rate=rate_str)
-                            await comm.save(out_path)
+                    if voice_arg:
+                        comm = Communicate(text, voice=voice_arg, rate=rate_str)
+                    else:
+                        comm = Communicate(text, rate=rate_str)
+                    await comm.save(out_path)
                             
                             # Verify file was created
                             if os.path.exists(out_path) and os.path.getsize(out_path) > 0:

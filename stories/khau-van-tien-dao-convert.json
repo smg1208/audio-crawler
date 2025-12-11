@@ -8,18 +8,18 @@
   "tags": "Khấu Vấn Tiên Đạo, Khau Van Tien Dao, Vũ Đả Thanh Thạch, Tần Tang, Tiên Hiệp, Tu Chân, Phàm Nhân Lưu, Trầm Ổn, Cổ Điển, Truyện Audio, Audio Tiên Hiệp, Nghe Truyện Convert, Truyện Tu Tiên Hay Nhất, Hắc Ám Lưu, Review Truyện, Audiobook, AI Voice",
   "narrator": "Nam Minh",
   "playlist": "",
-
+  
   "source": "bnsach",
   "base_url": "https://bnsach.com",
   "chapters_api": "https://bnsach.com/reader/khau-van-tien-dao-convert/muc-luc?page=all",
   "bnsach_username": "readingtruyen",
   "bnsach_password": "CTf9zwqnpJXYD3U",
-
+  
   "last_downloaded_chapter": 405,
   "batch_size": 4,
   "fetch_retries": 3,
   "fetch_backoff": 1.0,
-
+  
   "tts_backend": "google-cloud",
   "tts_voice": "vi-VN-NamMinhNeural",
   "tts_max_retries": 3,
@@ -29,31 +29,5 @@
   "fallback_engines": [
     "edge-tts",
     "gtts"
-  ],
-
-  "azure_subscription_key": "",
-  "azure_region": "eastus",
-  "azure_voice_name": "vi-VN-NamMinhNeural",
-
-  "google_cloud_credentials_path": "credentials/geometric-rex-370803-ef593306e755.json",
-  "google_cloud_language_code": "vi-VN",
-  "google_cloud_voice_name": "vi-VN-Chirp3-HD-Iapetus",
-  "google_cloud_ssml_gender": "MALE",
-
-  "edge_rate": 1.0,
-
-  "macos_voice": "Linh",
-
-  "coqui_model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
-  "coqui_device": "cpu",
-  "coqui_speaker_wav": "path/to/vi-VN-Chirp3-HD-Charon.mp3",
-  "coqui_language": "vi",
-
-  "openai_api_key": null,
-
-  "fpt_api_key": "",
-  "fpt_voice": "banmai",
-
-  "piper_model_path": "",
-  "piper_config_path": ""
+  ]
 }

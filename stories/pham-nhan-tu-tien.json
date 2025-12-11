@@ -1,0 +1,30 @@
+{
+  "story_id": "pham-nhan-tu-tien",
+  "story_title": "Phàm Nhân Tu Tiên",
+  "author": "Vong Ngữ",
+  "work_title": "Phàm Nhân Tu Tiên Truyện Audio",
+  "lead": "Phàm nhân tu tiên, phong vân tái khởi. Một thiếu niên bình thường, làm sao để đứng vững giữa thế giới tu chân tàn khốc?",
+  "synopsis": "Hàn Lập - một thiếu niên bình thường đến từ vùng quê nghèo, vô tình gia nhập một môn phái giang hồ nhỏ. Mặc dù tư chất kém cỏi, nhưng nhờ vào sự cẩn trọng, trí thông minh và một chiếc bình nhỏ bí ẩn, hắn đã từng bước dấn thân vào con đường tu tiên đầy chông gai. Truyện không có những kỳ ngộ từ trên trời rơi xuống, mà là quá trình đấu trí, đấu dũng, tranh giành từng chút tài nguyên để sinh tồn và vươn lên đỉnh cao.",
+  "tags": "Phàm Nhân Tu Tiên, Vong Ngữ, Hàn Lập, Hàn Lão Ma, Tiên Hiệp, Tu Chân, Phàm Nhân Lưu, Huyền Huyễn, Kiếm Hiệp, Truyện Audio, Audio Tiên Hiệp, Sách Nói, Nam Minh, Chưởng Thiên Bình, Tu Tiên, Cổ Trang, Đấu Trí, Nghịch Thiên, Trường Sinh, Loạn Tinh Hải, Nhân Giới",
+  "narrator": "Google Cloud - tts",
+  "playlist": "Phàm Nhân Tu Tiên",
+  "source": "bnsach",
+  "base_url": "https://bnsach.com",
+  "chapters_api": "https://bnsach.com/reader/pham-nhan-tu-tien/muc-luc?page=all",
+  "bnsach_username": "readingtruyen",
+  "bnsach_password": "CTf9zwqnpJXYD3U",
+  "last_downloaded_chapter": 1,
+  "batch_size": 2000,
+  "fetch_retries": 3,
+  "fetch_backoff": 1.0,
+  "tts_backend": "google-cloud",
+  "tts_voice": "vi-VN-NamMinhNeural",
+  "tts_max_retries": 3,
+  "tts_retry_failed": true,
+  "tts_concurrency": 2,
+  "enable_tts_fallback": false,
+  "fallback_engines": [
+    "edge-tts",
+    "gtts"
+  ]
+}

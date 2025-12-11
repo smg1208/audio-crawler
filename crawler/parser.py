@@ -101,24 +101,41 @@ class HTMLParser:
             return RAW
         
         # List các kiểu tên hay gặp cần loại (cả với và không có khoảng trắng)
+        # Bao gồm: Vong Mạng (và các biến thể), sleepy, nila32, giang_04, Bạch Ngọc Sách, Convert, etc.
         blacklist = [
-            'Vong Mạng', 'VongMạng', 
+            'Vong Mạng', 'VongMạng', 'vong mạng', 'vongmạng', 'VONG MẠNG', 'VONGMẠNG',
+            'sleepy', 'Sleepy', 'SLEEPY',
+            'nila32', 'Nila32', 'NILA32',
             'giang_04', 'giang04', 'giang 04', 'giang04 convert',
             'Bạch Ngọc Sách', 'BạchNgọcSách', 'BNS', 
             'Convert', 'convert'
         ]
         
-        # Bước 1: Thử loại bỏ từng từ trong blacklist (cả với và không có khoảng trắng)
+        # Bước 1: Thử loại bỏ từng từ trong blacklist (cả với và không có khoảng trắng, case-insensitive)
+        RAW_lower = RAW.lower()
         for word in blacklist:
-            # Loại bỏ nếu có khoảng trắng trước
-            if RAW.endswith(' ' + word):
-                RAW = RAW[:-(len(word) + 1)].strip()
-            # Loại bỏ nếu dính liền (không có khoảng trắng)
-            elif RAW.endswith(word):
-                RAW = RAW[:-len(word)].strip()
-            # Loại bỏ nếu có khoảng trắng sau
-            elif RAW.endswith(word + ' '):
-                RAW = RAW[:-len(word) - 1].strip()
+            word_lower = word.lower()
+            # Loại bỏ nếu có khoảng trắng trước (case-insensitive)
+            if RAW_lower.endswith(' ' + word_lower):
+                # Tìm vị trí thực tế trong RAW (case-sensitive) để cắt chính xác
+                pos = len(RAW_lower) - len(word_lower) - 1
+                if pos >= 0:
+                    RAW = RAW[:pos].strip()
+                    RAW_lower = RAW.lower()  # Update lowercase version
+                    continue
+            # Loại bỏ nếu dính liền (không có khoảng trắng, case-insensitive)
+            if RAW_lower.endswith(word_lower):
+                pos = len(RAW_lower) - len(word_lower)
+                if pos >= 0:
+                    RAW = RAW[:pos].strip()
+                    RAW_lower = RAW.lower()  # Update lowercase version
+                    continue
+            # Loại bỏ nếu có khoảng trắng sau (case-insensitive)
+            if RAW_lower.endswith(word_lower + ' '):
+                pos = len(RAW_lower) - len(word_lower) - 1
+                if pos >= 0:
+                    RAW = RAW[:pos].strip()
+                    RAW_lower = RAW.lower()  # Update lowercase version
         
         # Bước 2: Pattern detection - phát hiện tên dịch giả dựa trên pattern
         # Trước tiên, tìm chính xác vị trí của các từ trong blacklist (case-insensitive)
@@ -355,7 +372,7 @@ class HTMLParser:
         # Footer markers that should ONLY match when they appear as standalone phrases or at start of line
         # We need to be careful not to match these when they appear in story dialogue/content
         footer_markers_strict = [
-            'hãy nhấn like', 'tặng phiếu', 'link thảo luận', 'link thảo luận bên forum',
+            'hãy nhấn like', 'tặng phiếu', 'link thảo luận', 'link thảo luận bên forum', 
             'thank', 'thanks', '感谢', '感谢支持'
         ]
         

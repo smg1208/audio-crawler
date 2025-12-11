@@ -62,10 +62,89 @@ def main(argv=None):
     store = StoryConfigStore(config_path)
     story_cfg = store.load_story(story_id)
 
+    # Load TTS config from separate file (if exists)
+    tts_config_path = 'tts_config.json'
+    tts_cfg = None
+    if os.path.exists(tts_config_path):
+        try:
+            tts_cfg = ConfigManager(tts_config_path)
+        except Exception as e:
+            print(f"⚠️  Warning: Could not load tts_config.json: {e}. Using fallback configs.")
+
     def cfg_get(key, default=None):
         # prefer story-specific config, fallback to global config
         val = story_cfg.get(key)
         if val is None:
+            val = global_cfg.get(key, default)
+        return val
+    
+    def tts_cfg_get(backend, key, default=None):
+        """Get TTS config: args -> story config -> tts_config.json (nested) -> global config -> default"""
+        # First try story config (for backward compatibility and story-specific overrides)
+        val = story_cfg.get(key)
+        if val is not None:
+            return val
+        
+        # Then try tts_config.json (new centralized location with nested structure)
+        if tts_cfg:
+            # Map backend names to tts_config.json keys
+            backend_map = {
+                'azure': 'azure',
+                'google-cloud': 'google_cloud',
+                'edge-tts': 'edge_tts',
+                'macos': 'macos',
+                'coqui': 'coqui',
+                'fpt-ai': 'fpt_ai',
+                'piper': 'piper',
+                'openai': 'openai'
+            }
+            backend_key = backend_map.get(backend, backend.replace('-', '_'))
+            
+            # Try nested structure (e.g., tts_config.json -> google_cloud -> voice_name)
+            backend_config = tts_cfg.get(backend_key, {})
+            if isinstance(backend_config, dict):
+                # Map common key names to nested keys
+                key_map = {
+                    'subscription_key': 'subscription_key',
+                    'azure_subscription_key': 'subscription_key',
+                    'region': 'region',
+                    'azure_region': 'region',
+                    'voice_name': 'voice_name',
+                    'azure_voice_name': 'voice_name',
+                    'credentials_path': 'credentials_path',
+                    'google_cloud_credentials_path': 'credentials_path',
+                    'language_code': 'language_code',
+                    'google_cloud_language_code': 'language_code',
+                    'google_cloud_voice_name': 'voice_name',
+                    'ssml_gender': 'ssml_gender',
+                    'google_cloud_ssml_gender': 'ssml_gender',
+                    'rate': 'rate',
+                    'edge_rate': 'rate',
+                    'voice': 'voice',
+                    'macos_voice': 'voice',
+                    'model_name': 'model_name',
+                    'coqui_model_name': 'model_name',
+                    'device': 'device',
+                    'coqui_device': 'device',
+                    'speaker_wav': 'speaker_wav',
+                    'coqui_speaker_wav': 'speaker_wav',
+                    'language': 'language',
+                    'coqui_language': 'language',
+                    'api_key': 'api_key',
+                    'fpt_api_key': 'api_key',
+                    'fpt_voice': 'voice',
+                    'model_path': 'model_path',
+                    'piper_model_path': 'model_path',
+                    'config_path': 'config_path',
+                    'piper_config_path': 'config_path',
+                    'openai_api_key': 'api_key'
+                }
+                nested_key = key_map.get(key, key.replace(f'{backend_key}_', '').replace(f'{backend}_', '').replace('google_cloud_', '').replace('azure_', '').replace('edge_', '').replace('fpt_', '').replace('coqui_', '').replace('piper_', '').replace('macos_', ''))
+                nested_val = backend_config.get(nested_key)
+                if nested_val is not None:
+                    return nested_val
+        
+        # Fallback to global config
             val = global_cfg.get(key, default)
         return val
 
@@ -118,9 +197,9 @@ def main(argv=None):
             except Exception:
                 print("Fatal: 'piper-tts' Python package not available. Install with 'pip install piper-tts' or run with --dry-run.")
                 sys.exit(2)
-            piper_model_path = args.piper_model_path or cfg_get('piper_model_path')
+            piper_model_path = args.piper_model_path or tts_cfg_get('piper', 'model_path') or cfg_get('piper_model_path')
             if not piper_model_path:
-                print("Fatal: Piper model path is required. Set --piper-model-path or add 'piper_model_path' to config.json")
+                print("Fatal: Piper model path is required. Set --piper-model-path, add to tts_config.json, or add 'piper_model_path' to config.json")
                 print("   Example: 'models/vi_VN-vivos-x_low.onnx'")
                 sys.exit(2)
             if not os.path.exists(piper_model_path):
@@ -132,10 +211,10 @@ def main(argv=None):
             except Exception:
                 print("Fatal: 'google-cloud-texttospeech' Python package not available. Install with 'pip install google-cloud-texttospeech' or run with --dry-run.")
                 sys.exit(2)
-            google_cloud_credentials = args.google_cloud_credentials or cfg_get('google_cloud_credentials_path') or os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+            google_cloud_credentials = args.google_cloud_credentials or tts_cfg_get('google-cloud', 'credentials_path') or cfg_get('google_cloud_credentials_path') or os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
             if not google_cloud_credentials:
                 print("Fatal: Google Cloud credentials are required.")
-                print("   Set --google-cloud-credentials, add 'google_cloud_credentials_path' to config.json,")
+                print("   Set --google-cloud-credentials, add to tts_config.json, add 'google_cloud_credentials_path' to config.json,")
                 print("   or set GOOGLE_APPLICATION_CREDENTIALS environment variable")
                 sys.exit(2)
             if google_cloud_credentials and not os.path.exists(google_cloud_credentials):
@@ -147,9 +226,9 @@ def main(argv=None):
             except Exception:
                 print("Fatal: 'requests' Python package not available. Install with 'pip install requests' or run with --dry-run.")
                 sys.exit(2)
-            fpt_api_key = args.fpt_api_key or cfg_get('fpt_api_key')
+            fpt_api_key = args.fpt_api_key or tts_cfg_get('fpt-ai', 'api_key') or cfg_get('fpt_api_key')
             if not fpt_api_key:
-                print("Fatal: FPT.AI API key is required. Set --fpt-api-key or add 'fpt_api_key' to config.json")
+                print("Fatal: FPT.AI API key is required. Set --fpt-api-key, add to tts_config.json, or add 'fpt_api_key' to config.json")
                 sys.exit(2)
         if tts_backend == 'azure':
             try:
@@ -157,10 +236,10 @@ def main(argv=None):
             except Exception:
                 print("Fatal: 'azure-cognitiveservices-speech' Python package not available. Install with 'pip install azure-cognitiveservices-speech' or run with --dry-run.")
                 sys.exit(2)
-            azure_subscription_key = args.azure_subscription_key or cfg_get('azure_subscription_key') or os.environ.get('AZURE_SPEECH_KEY')
+            azure_subscription_key = args.azure_subscription_key or tts_cfg_get('azure', 'subscription_key') or cfg_get('azure_subscription_key') or os.environ.get('AZURE_SPEECH_KEY')
             if not azure_subscription_key:
                 print("Fatal: Azure TTS subscription key is required.")
-                print("   Set --azure-subscription-key, add 'azure_subscription_key' to config.json,")
+                print("   Set --azure-subscription-key, add to tts_config.json, add 'azure_subscription_key' to config.json,")
                 print("   or set AZURE_SPEECH_KEY environment variable")
                 sys.exit(2)
 
@@ -186,35 +265,47 @@ def main(argv=None):
             print("   Add 'bnsach_username' and 'bnsach_password' to your config.json")
     
     html_parser = HTMLParser()
-    # Get configuration for TTS engines
+    # Get configuration for TTS engines (using centralized tts_config.json when available)
+    # Initialize all TTS backend variables to None
     fpt_api_key = None
-    fpt_voice = cfg_get('fpt_voice', 'banmai')  # default: banmai (female, Northern Vietnamese)
-    macos_voice = cfg_get('macos_voice', 'Linh')  # default: Linh (female Vietnamese)
-    edge_rate = cfg_get('edge_rate', 1.0)  # default: 1.0
+    fpt_voice = tts_cfg_get('fpt-ai', 'voice', 'banmai') if tts_backend == 'fpt-ai' else cfg_get('fpt_voice', 'banmai')
+    macos_voice = tts_cfg_get('macos', 'voice', 'Linh') if tts_backend == 'macos' else cfg_get('macos_voice', 'Linh')
+    edge_rate = tts_cfg_get('edge-tts', 'rate', 1.0) if tts_backend == 'edge-tts' else cfg_get('edge_rate', 1.0)
     enable_fallback = cfg_get('enable_tts_fallback', False)  # default: False
     fallback_engines = cfg_get('fallback_engines', ['macos', 'gtts'])  # default fallbacks
     piper_model_path = None
     piper_config_path = None
+    google_cloud_credentials_path = None
+    google_cloud_language_code = 'vi-VN'
+    google_cloud_voice_name = None
+    google_cloud_ssml_gender = None
+    coqui_model_name = None
+    coqui_device = None
+    coqui_speaker_wav = None
+    coqui_language = 'vi'
+    azure_subscription_key = None
+    azure_region = 'eastus'
+    azure_voice_name = None
     
     if tts_backend == 'fpt-ai':
-        fpt_api_key = args.fpt_api_key or cfg_get('fpt_api_key')
+        fpt_api_key = args.fpt_api_key or tts_cfg_get('fpt-ai', 'api_key') or cfg_get('fpt_api_key')
     elif tts_backend == 'piper':
-        piper_model_path = args.piper_model_path or cfg_get('piper_model_path')
-        piper_config_path = args.piper_config_path or cfg_get('piper_config_path')
+        piper_model_path = args.piper_model_path or tts_cfg_get('piper', 'model_path') or cfg_get('piper_model_path')
+        piper_config_path = args.piper_config_path or tts_cfg_get('piper', 'config_path') or cfg_get('piper_config_path')
     elif tts_backend == 'google-cloud':
-        google_cloud_credentials_path = args.google_cloud_credentials or cfg_get('google_cloud_credentials_path')
-        google_cloud_language_code = args.google_cloud_language or cfg_get('google_cloud_language_code', 'vi-VN')
-        google_cloud_voice_name = args.google_cloud_voice or cfg_get('google_cloud_voice_name')
-        google_cloud_ssml_gender = args.google_cloud_gender or cfg_get('google_cloud_ssml_gender')
+        google_cloud_credentials_path = args.google_cloud_credentials or tts_cfg_get('google-cloud', 'credentials_path') or cfg_get('google_cloud_credentials_path')
+        google_cloud_language_code = args.google_cloud_language or tts_cfg_get('google-cloud', 'language_code') or cfg_get('google_cloud_language_code', 'vi-VN')
+        google_cloud_voice_name = args.google_cloud_voice or tts_cfg_get('google-cloud', 'voice_name') or cfg_get('google_cloud_voice_name')
+        google_cloud_ssml_gender = args.google_cloud_gender or tts_cfg_get('google-cloud', 'ssml_gender') or cfg_get('google_cloud_ssml_gender')
     elif tts_backend == 'coqui':
-        coqui_model_name = args.coqui_model_name or cfg_get('coqui_model_name', 'tts_models/multilingual/multi-dataset/xtts_v2')
-        coqui_device = args.coqui_device or cfg_get('coqui_device')
-        coqui_speaker_wav = args.coqui_speaker_wav or cfg_get('coqui_speaker_wav')
-        coqui_language = args.coqui_language or cfg_get('coqui_language', 'vi')
+        coqui_model_name = args.coqui_model_name or tts_cfg_get('coqui', 'model_name') or cfg_get('coqui_model_name', 'tts_models/multilingual/multi-dataset/xtts_v2')
+        coqui_device = args.coqui_device or tts_cfg_get('coqui', 'device') or cfg_get('coqui_device')
+        coqui_speaker_wav = args.coqui_speaker_wav or tts_cfg_get('coqui', 'speaker_wav') or cfg_get('coqui_speaker_wav')
+        coqui_language = args.coqui_language or tts_cfg_get('coqui', 'language') or cfg_get('coqui_language', 'vi')
     elif tts_backend == 'azure':
-        azure_subscription_key = args.azure_subscription_key or cfg_get('azure_subscription_key') or os.environ.get('AZURE_SPEECH_KEY')
-        azure_region = args.azure_region or cfg_get('azure_region', 'eastus')
-        azure_voice_name = args.azure_voice or cfg_get('azure_voice_name', 'vi-VN-HoaiMyNeural')
+        azure_subscription_key = args.azure_subscription_key or tts_cfg_get('azure', 'subscription_key') or cfg_get('azure_subscription_key') or os.environ.get('AZURE_SPEECH_KEY')
+        azure_region = args.azure_region or tts_cfg_get('azure', 'region') or cfg_get('azure_region', 'eastus')
+        azure_voice_name = args.azure_voice or tts_cfg_get('azure', 'voice_name') or cfg_get('azure_voice_name', 'vi-VN-HoaiMyNeural')
     
     converter = TextToAudioConverter(
         backend=tts_backend, 
@@ -522,7 +613,7 @@ def main(argv=None):
 
         llm_client = None
         if args.use_llm:
-            openai_key = args.openai_api_key or cfg_get('openai_api_key') or os.environ.get('OPENAI_API_KEY')
+            openai_key = args.openai_api_key or tts_cfg_get('openai', 'api_key') or cfg_get('openai_api_key') or os.environ.get('OPENAI_API_KEY')
             llm_client = LLMClient(api_key=openai_key)
 
         for idx, info in sorted(fetched.items()):

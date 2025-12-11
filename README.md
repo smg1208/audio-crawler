@@ -1,11 +1,53 @@
 # TANGTHUVIEN & BNSACH CRAWLER & AUDIO CONVERTER
 
-This small Python project downloads story chapters from tangthuvien.net or bnsach.com, saves each chapter as a text file, and converts it to audio using an external CLI tool `ttx`.
+This small Python project downloads story chapters from tangthuvien.net or bnsach.com, saves each chapter as a text file, and converts it to audio using various TTS backends.
 
-Features
+## Features
 - Config-driven (config.json) so you can continue from last download
 - Stores chapters as text and generated audio files in per-story folders
-- Uses requests + BeautifulSoup for crawling and subprocess to call `ttx`
+- Supports multiple TTS backends: edge-tts, Azure, Google Cloud, macOS, Coqui, Piper, and more
+- Uses requests + BeautifulSoup for crawling
+
+## Project Structure
+
+```
+.
+├── README.md                 # This file
+├── requirements.txt          # Python dependencies
+├── config.json               # Main configuration file
+├── run.py                    # Main entry point
+├── crawler/                  # Core crawler modules
+│   ├── config_manager.py     # Configuration management
+│   ├── fetcher.py            # Chapter fetching
+│   ├── parser.py             # HTML parsing
+│   ├── converter.py         # Text-to-audio conversion
+│   ├── tts_engines.py        # TTS backend implementations
+│   └── ...
+├── scripts/                  # Utility scripts
+│   ├── gen_youtube_descriptions.py
+│   ├── refetch_incomplete_chapters.py
+│   ├── calculate_azure_cost.py
+│   └── ...
+├── docs/                     # Documentation
+│   ├── README.md             # Documentation index
+│   ├── AZURE_TTS_GUIDE.md
+│   ├── GOOGLE_CLOUD_TTS_GUIDE.md
+│   ├── macos_voices_full.txt
+│   └── ...
+├── examples/                 # Example configurations
+│   ├── config.example.json
+│   └── config.bnsach.example.json
+├── assets/                   # Static assets
+│   ├── intro.txt
+│   └── intro.mp3 (if used)
+├── stories/                  # Per-story configurations
+│   ├── 38060.json
+│   ├── story_38060_names.json
+│   └── ...
+├── tests/                    # Unit tests
+├── {story_id} - mapping.csv  # Runtime mapping files (auto-generated)
+└── {story_id} - Text/        # Chapter text files (runtime)
+```
 
 Requirements
 - Python 3.8+
@@ -162,10 +204,10 @@ When you run the tool, it will read and update `./stories/12345.json` so that `l
 
 Generate YouTube descriptions for every 5 chapters
 -------------------------------------------------
-You can generate YouTube description files (one per N-chapter group) using the helper script `gen_youtube_descriptions.py`.
+You can generate YouTube description files (one per N-chapter group) using the helper script:
 
 ```bash
-python3 gen_youtube_descriptions.py --config config.json --group-size 5 --playlist "https://youtube.com/playlist?list=..."
+python3 scripts/gen_youtube_descriptions.py --config config.json --group-size 5 --playlist "https://youtube.com/playlist?list=..."
 ```
 
 This will create files in `./{story_id} - Youtube description/` such as `Tập_1_Chương_1_đến_5.txt` using our standard template.
@@ -205,7 +247,7 @@ Usage with explicit story-id
 You can override which story to use by supplying `--story-id` on the CLI (this will load/create `./stories/<story_id>.json` and use any metadata found there):
 
 ```bash
-python3 gen_youtube_descriptions.py --config config.json --story-id 38060 --group-size 5 --playlist "https://..."
+python3 scripts/gen_youtube_descriptions.py --config config.json --story-id 38060 --group-size 5 --playlist "https://..."
 ```
 
 When no per-story metadata exists, the generator will fall back to the story name (fetched from the site, if available) and sensible defaults.

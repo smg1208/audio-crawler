@@ -37,3 +37,6 @@ models/
 voice_samples/
 venv_py311/
 path/
+
+# Runtime data (optional - uncomment to ignore mapping files)
+# * - mapping.csv

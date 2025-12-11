@@ -285,15 +285,15 @@ class EdgeTTS(BaseTTS):
         if len(text_chunks) == 1:
             last_error = None
             for attempt in range(max_retries):
-                try:
-                    comm = Communicate(text=text, voice=self.voice, rate=rate_str)
-                    await comm.save(output_file)
+            try:
+                comm = Communicate(text=text, voice=self.voice, rate=rate_str)
+                await comm.save(output_file)
                     # Verify file was created
                     if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-                        return
+                return
                     else:
                         raise RuntimeError("Audio file was not created or is empty")
-                except Exception as exc:
+            except Exception as exc:
                     last_error = exc
                     error_str = str(exc).lower()
                     # Check if it's a rate limiting / blocking issue
@@ -339,19 +339,19 @@ class EdgeTTS(BaseTTS):
                 last_chunk_error = None
                 
                 for chunk_attempt in range(max_retries):
-                    try:
-                        print(f"  Đang tạo chunk {i+1}/{len(text_chunks)} ({len(chunk)} ký tự)...")
-                        comm = Communicate(text=chunk, voice=self.voice, rate=rate_str)
-                        await comm.save(temp_file)
-                        
-                        # Kiểm tra file đã được tạo và có nội dung
+                try:
+                    print(f"  Đang tạo chunk {i+1}/{len(text_chunks)} ({len(chunk)} ký tự)...")
+                    comm = Communicate(text=chunk, voice=self.voice, rate=rate_str)
+                    await comm.save(temp_file)
+                    
+                    # Kiểm tra file đã được tạo và có nội dung
                         if os.path.exists(temp_file) and os.path.getsize(temp_file) > 0:
                             chunk_success = True
                             break  # Thành công, thoát retry loop
                         else:
-                            raise RuntimeError(f"Chunk {i+1} tạo file rỗng hoặc không tồn tại")
-                        
-                    except Exception as chunk_exc:
+                        raise RuntimeError(f"Chunk {i+1} tạo file rỗng hoặc không tồn tại")
+                    
+                except Exception as chunk_exc:
                         last_chunk_error = chunk_exc
                         error_str = str(chunk_exc).lower()
                         is_rate_limit = (
@@ -373,13 +373,13 @@ class EdgeTTS(BaseTTS):
                             # Đã hết retry
                             error_msg = f"Chunk {i+1}/{len(text_chunks)} failed after {max_retries} attempts: {last_chunk_error}"
                             print(f"  ❌ {error_msg}")
-                            failed_chunks.append((i+1, error_msg))
-                            # Xóa file lỗi nếu có
-                            try:
-                                if os.path.exists(temp_file):
-                                    os.remove(temp_file)
-                            except Exception:
-                                pass
+                    failed_chunks.append((i+1, error_msg))
+                    # Xóa file lỗi nếu có
+                    try:
+                        if os.path.exists(temp_file):
+                            os.remove(temp_file)
+                    except Exception:
+                        pass
             
             # Kiểm tra xem có chunk nào thành công không
             valid_files = [f for f in temp_files if os.path.exists(f) and os.path.getsize(f) > 0]
@@ -1667,10 +1667,10 @@ class AzureTTS(BaseTTS):
                     
                     # Cấu hình speech config
                     try:
-                        speech_config = speechsdk.SpeechConfig(
-                            subscription=self.subscription_key,
-                            region=self.region
-                        )
+                    speech_config = speechsdk.SpeechConfig(
+                        subscription=self.subscription_key,
+                        region=self.region
+                    )
                     except Exception as config_exc:
                         raise RuntimeError(
                             f"Failed to create SpeechConfig: {config_exc}\n"
@@ -1822,11 +1822,11 @@ class AzureTTS(BaseTTS):
                         return True
                     elif result.reason == speechsdk.ResultReason.Canceled:
                         try:
-                            cancellation = speechsdk.CancellationDetails(result)
-                            error_msg = f"Azure TTS canceled: {cancellation.reason}"
-                            if cancellation.reason == speechsdk.CancellationReason.Error:
+                        cancellation = speechsdk.CancellationDetails(result)
+                        error_msg = f"Azure TTS canceled: {cancellation.reason}"
+                        if cancellation.reason == speechsdk.CancellationReason.Error:
                                 if hasattr(cancellation, 'error_details') and cancellation.error_details:
-                                    error_msg += f" - {cancellation.error_details}"
+                            error_msg += f" - {cancellation.error_details}"
                                 if hasattr(cancellation, 'error_code'):
                                     error_msg += f" (Error code: {cancellation.error_code})"
                         except Exception as cancel_exc:
